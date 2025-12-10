@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nadiai-prompt-guard"
+version = "0.1.0"
+description = "NadiAI Prompt Guard SDK - Local LLM security scanning with ONNX models"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "NadiAI", email = "support@nadiai.com"}
+]
+keywords = ["llm", "security", "prompt-injection", "ai-safety", "onnx"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "onnxruntime>=1.16.0",
+    "transformers>=4.30.0",
+    "optimum[onnxruntime]>=1.12.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nadiai/prompt-guard-sdk"
+Documentation = "https://docs.nadiai.com/prompt-guard"
+Repository = "https://github.com/nadiai/prompt-guard-sdk"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["nadiai_prompt_guard*"]
+
+[tool.setuptools.package-data]
+nadiai_prompt_guard = ["models/*"]
