@@ -86,6 +86,25 @@ def models_downloaded(cache_dir: str = None) -> bool:
     return injection_model.exists() and toxic_model.exists()
 
 
+def _check_model_exported(model_name: str) -> bool:
+    """Check if a model has already been exported to ONNX format in HuggingFace cache."""
+    hub_cache = Path.home() / ".cache" / "huggingface" / "hub"
+    cache_name = f"models--{model_name.replace('/', '--')}"
+    model_cache = hub_cache / cache_name
+
+    if not model_cache.exists():
+        return False
+
+    snapshots_dir = model_cache / "snapshots"
+    if snapshots_dir.exists():
+        for snapshot in snapshots_dir.iterdir():
+            if snapshot.is_dir():
+                onnx_files = list(snapshot.glob("*.onnx"))
+                if onnx_files:
+                    return True
+    return False
+
+
 def download_models(cache_dir: str = None, verbose: bool = True) -> bool:
     """
     Pre-download models to local cache for offline use.
@@ -119,26 +138,38 @@ def download_models(cache_dir: str = None, verbose: bool = True) -> bool:
 
     try:
         # Download prompt injection model
-        if verbose:
-            print("Downloading prompt injection model (DeBERTa, ~700MB)...")
-
         model_name = "protectai/deberta-v3-base-prompt-injection-v2"
+        needs_export = not _check_model_exported(model_name)
+
+        if verbose:
+            if needs_export:
+                print("Downloading and exporting prompt injection model (DeBERTa, ~700MB)...")
+            else:
+                print("Loading cached prompt injection model...")
+
         _ORTModelForSequenceClassification.from_pretrained(
             model_name,
-            export=True,
+            export=needs_export,
             provider="CPUExecutionProvider"
         )
         _AutoTokenizer.from_pretrained(model_name)
 
         if verbose:
             print("  Done!")
-            print("Downloading harmful content model (BERT toxicity)...")
 
         # Download toxic model
         model_name = "martin-ha/toxic-comment-model"
+        needs_export = not _check_model_exported(model_name)
+
+        if verbose:
+            if needs_export:
+                print("Downloading and exporting harmful content model (BERT toxicity)...")
+            else:
+                print("Loading cached harmful content model...")
+
         _ORTModelForSequenceClassification.from_pretrained(
             model_name,
-            export=True,
+            export=needs_export,
             provider="CPUExecutionProvider"
         )
         _AutoTokenizer.from_pretrained(model_name)
@@ -335,6 +366,29 @@ class PromptGuard:
         if self.verbose:
             print(f"[PromptGuard] {message}")
 
+    def _model_is_exported(self, model_name: str) -> bool:
+        """Check if a model has already been exported to ONNX format in HuggingFace cache."""
+        # Check HuggingFace hub cache for ONNX files
+        hub_cache = Path.home() / ".cache" / "huggingface" / "hub"
+        # Convert model name to cache directory format (e.g., "protectai/model" -> "models--protectai--model")
+        cache_name = f"models--{model_name.replace('/', '--')}"
+        model_cache = hub_cache / cache_name
+
+        if not model_cache.exists():
+            return False
+
+        # Check for ONNX model files in snapshots
+        snapshots_dir = model_cache / "snapshots"
+        if snapshots_dir.exists():
+            for snapshot in snapshots_dir.iterdir():
+                if snapshot.is_dir():
+                    # Look for .onnx files indicating exported model
+                    onnx_files = list(snapshot.glob("*.onnx"))
+                    if onnx_files:
+                        return True
+
+        return False
+
     def load_models(self) -> bool:
         """
         Load ONNX models into memory.
@@ -358,9 +412,14 @@ class PromptGuard:
                 self._log("Loading prompt injection model...")
                 model_name = self.MODELS["prompt_injection"]["name"]
 
+                # Only export if not already exported
+                needs_export = not self._model_is_exported(model_name)
+                if needs_export:
+                    self._log(f"Model {model_name} needs ONNX export...")
+
                 self._models["prompt_injection"] = _ORTModelForSequenceClassification.from_pretrained(
                     model_name,
-                    export=True,
+                    export=needs_export,
                     provider="CPUExecutionProvider",
                     cache_dir=str(self.cache_dir)
                 )
@@ -372,9 +431,14 @@ class PromptGuard:
                 self._log("Loading harmful content model...")
                 model_name = self.MODELS["harmful_content"]["name"]
 
+                # Only export if not already exported
+                needs_export = not self._model_is_exported(model_name)
+                if needs_export:
+                    self._log(f"Model {model_name} needs ONNX export...")
+
                 self._models["harmful_content"] = _ORTModelForSequenceClassification.from_pretrained(
                     model_name,
-                    export=True,
+                    export=needs_export,
                     provider="CPUExecutionProvider",
                     cache_dir=str(self.cache_dir)
                 )
