@@ -137,33 +137,30 @@ def download_models(cache_dir: str = None, verbose: bool = True) -> bool:
     cache_path.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Download prompt injection model
+        # Download prompt injection model (has pre-exported ONNX)
         model_name = "protectai/deberta-v3-base-prompt-injection-v2"
-        needs_export = not _check_model_exported(model_name)
-
         if verbose:
-            if needs_export:
-                print("Downloading and exporting prompt injection model (DeBERTa, ~700MB)...")
-            else:
-                print("Loading cached prompt injection model...")
+            print("Downloading prompt injection model (DeBERTa, pre-exported ONNX)...")
 
         _ORTModelForSequenceClassification.from_pretrained(
             model_name,
-            export=needs_export,
+            export=False,
+            subfolder="onnx",
             provider="CPUExecutionProvider"
         )
-        _AutoTokenizer.from_pretrained(model_name)
+        _AutoTokenizer.from_pretrained(model_name, subfolder="onnx")
 
         if verbose:
             print("  Done!")
 
-        # Download toxic model
+        # Download toxic model (needs export - high memory)
         model_name = "martin-ha/toxic-comment-model"
         needs_export = not _check_model_exported(model_name)
 
         if verbose:
             if needs_export:
                 print("Downloading and exporting harmful content model (BERT toxicity)...")
+                print("  WARNING: This requires >2GB RAM for ONNX export")
             else:
                 print("Loading cached harmful content model...")
 
@@ -253,16 +250,22 @@ class PromptGuard:
     """
 
     # Model configurations
+    # Models with has_onnx=True have pre-exported ONNX in subfolder="onnx"
+    # Models with has_onnx=False need export=True on first load (memory intensive)
     MODELS = {
         "prompt_injection": {
             "name": "protectai/deberta-v3-base-prompt-injection-v2",
             "threshold": 0.5,
-            "description": "Advanced prompt injection detection using DeBERTa"
+            "description": "Advanced prompt injection detection using DeBERTa",
+            "has_onnx": True,  # Pre-exported ONNX available in onnx/ subfolder
+            "subfolder": "onnx"
         },
         "harmful_content": {
             "name": "martin-ha/toxic-comment-model",
             "threshold": 0.5,
-            "description": "Toxicity and harmful content detection using BERT"
+            "description": "Toxicity and harmful content detection using BERT",
+            "has_onnx": False,  # No pre-exported ONNX, needs export
+            "subfolder": None
         }
     }
 
@@ -393,6 +396,9 @@ class PromptGuard:
         """
         Load ONNX models into memory.
 
+        Uses pre-exported ONNX models when available (low memory).
+        Falls back to export on first load for models without pre-exported ONNX.
+
         Returns:
             True if models loaded successfully, False otherwise
         """
@@ -410,39 +416,75 @@ class PromptGuard:
             # Load prompt injection model
             if self.enable_injection:
                 self._log("Loading prompt injection model...")
-                model_name = self.MODELS["prompt_injection"]["name"]
+                model_config = self.MODELS["prompt_injection"]
+                model_name = model_config["name"]
+                has_onnx = model_config.get("has_onnx", False)
+                subfolder = model_config.get("subfolder")
 
-                # Only export if not already exported
-                needs_export = not self._model_is_exported(model_name)
-                if needs_export:
-                    self._log(f"Model {model_name} needs ONNX export...")
+                if has_onnx and subfolder:
+                    # Use pre-exported ONNX (low memory, fast)
+                    self._log(f"Using pre-exported ONNX from {subfolder}/ subfolder")
+                    self._models["prompt_injection"] = _ORTModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        export=False,
+                        subfolder=subfolder,
+                        provider="CPUExecutionProvider"
+                    )
+                    self._tokenizers["prompt_injection"] = _AutoTokenizer.from_pretrained(
+                        model_name,
+                        subfolder=subfolder
+                    )
+                    # Fix tokenizer input names for ONNX compatibility
+                    self._tokenizers["prompt_injection"].model_input_names = ["input_ids", "attention_mask"]
+                else:
+                    # Fall back to export (high memory on first load)
+                    needs_export = not self._model_is_exported(model_name)
+                    if needs_export:
+                        self._log(f"Model {model_name} needs ONNX export (high memory)...")
+                    self._models["prompt_injection"] = _ORTModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        export=needs_export,
+                        provider="CPUExecutionProvider",
+                        cache_dir=str(self.cache_dir)
+                    )
+                    self._tokenizers["prompt_injection"] = _AutoTokenizer.from_pretrained(model_name)
 
-                self._models["prompt_injection"] = _ORTModelForSequenceClassification.from_pretrained(
-                    model_name,
-                    export=needs_export,
-                    provider="CPUExecutionProvider",
-                    cache_dir=str(self.cache_dir)
-                )
-                self._tokenizers["prompt_injection"] = _AutoTokenizer.from_pretrained(model_name)
                 self._log("Prompt injection model loaded")
 
             # Load harmful content model
             if self.enable_harmful:
                 self._log("Loading harmful content model...")
-                model_name = self.MODELS["harmful_content"]["name"]
+                model_config = self.MODELS["harmful_content"]
+                model_name = model_config["name"]
+                has_onnx = model_config.get("has_onnx", False)
+                subfolder = model_config.get("subfolder")
 
-                # Only export if not already exported
-                needs_export = not self._model_is_exported(model_name)
-                if needs_export:
-                    self._log(f"Model {model_name} needs ONNX export...")
+                if has_onnx and subfolder:
+                    # Use pre-exported ONNX (low memory, fast)
+                    self._log(f"Using pre-exported ONNX from {subfolder}/ subfolder")
+                    self._models["harmful_content"] = _ORTModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        export=False,
+                        subfolder=subfolder,
+                        provider="CPUExecutionProvider"
+                    )
+                    self._tokenizers["harmful_content"] = _AutoTokenizer.from_pretrained(
+                        model_name,
+                        subfolder=subfolder
+                    )
+                else:
+                    # Fall back to export (high memory on first load)
+                    needs_export = not self._model_is_exported(model_name)
+                    if needs_export:
+                        self._log(f"Model {model_name} needs ONNX export (high memory)...")
+                    self._models["harmful_content"] = _ORTModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        export=needs_export,
+                        provider="CPUExecutionProvider",
+                        cache_dir=str(self.cache_dir)
+                    )
+                    self._tokenizers["harmful_content"] = _AutoTokenizer.from_pretrained(model_name)
 
-                self._models["harmful_content"] = _ORTModelForSequenceClassification.from_pretrained(
-                    model_name,
-                    export=needs_export,
-                    provider="CPUExecutionProvider",
-                    cache_dir=str(self.cache_dir)
-                )
-                self._tokenizers["harmful_content"] = _AutoTokenizer.from_pretrained(model_name)
                 self._log("Harmful content model loaded")
 
             self._loaded = True
