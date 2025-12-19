@@ -4,17 +4,21 @@
 
 ## What is This?
 
-LLMSEC LITE is a lightweight Python SDK providing 6 guard rails for LLM security. It lives inside the main llmsec repo at `/sdk` but is publishable as a standalone PyPI package.
+LLMSEC LITE is a lightweight Python SDK providing 6 guard rails for LLM security. Published as a standalone PyPI package.
+
+**GitHub:** https://github.com/nadiai-inc/prompt-guard-sdk
 
 ## Quick Reference
 
 ```
 Package:     llmsec-lite
-Location:    /sdk (this directory)
+Version:     1.0.0
+GitHub:      https://github.com/nadiai-inc/prompt-guard-sdk
 Python:      3.9+
 Disk:        ~138 MB (models)
 RAM Target:  ~200 MB
 Latency:     ~5ms (local) / ~300ms (full)
+Tests:       72 passing
 ```
 
 ## The 6 Guard Rails
@@ -48,17 +52,17 @@ Latency:     ~5ms (local) / ~300ms (full)
 sdk/
 ├── CLAUDE.md              <- You are here
 ├── README.md              <- User-facing docs
-├── pyproject.toml         <- Package config
+├── LICENSE                <- MIT License
+├── pyproject.toml         <- Package config (llmsec-lite v1.0.0)
 ├── .env.example           <- Environment template
 ├── llmsec_lite.config.example.json <- Config template for database integration
-├── test_all_scanners.py   <- Comprehensive test script
+├── test_all_scanners.py   <- Comprehensive test script (36 tests)
 ├── src/
 │   └── llmsec_lite/
 │       ├── __init__.py    <- Exports TrustGuard, ScanResult, download_models
-│       ├── guard.py       <- Main TrustGuard class
+│       ├── guard.py       <- Main TrustGuard class + test_scanner()
 │       ├── router.py      <- SMART ROUTER (parallel, tiered, early exit)
-│       ├── config.py      <- Configuration
-│       ├── cli.py         <- CLI commands (llmsec-lite download)
+│       ├── exceptions.py  <- Custom exceptions
 │       ├── scanners/
 │       │   ├── base.py           <- BaseScanner abstract (async)
 │       │   ├── injection.py      <- ONNX prompt injection
@@ -77,103 +81,51 @@ sdk/
 │       │   └── code_injection.json <- 45 injection patterns
 │       ├── schemas/
 │       │   ├── results.py        <- ScanResult, Finding
-│       │   └── config.py         <- Config schemas
+│       │   └── config.py         <- Config schemas (LLMSecLiteConfig, etc.)
 │       └── utils/
 │           ├── redactor.py
 │           └── logger.py
-├── tests/
-│   ├── test_injection.py
-│   ├── test_toxicity.py
-│   ├── test_secrets.py
-│   ├── test_pii.py
-│   ├── test_code_injection.py
-│   └── conftest.py
-└── examples/
+└── tests/                 <- 72 unit tests
+    ├── test_guard.py
+    ├── test_injection.py
+    ├── test_toxicity.py
+    ├── test_secrets.py
+    ├── test_pii.py
+    ├── test_code_injection.py
+    └── conftest.py
 ```
 
-## Model Registry
+## Key API Methods
 
-Located in `src/llmsec_lite/models/downloader.py`:
+### TrustGuard Class
 
 ```python
-MODEL_REGISTRY = {
-    "injection": {
-        "filename": "injection_model.onnx",
-        "url": "https://huggingface.co/testsavantai/prompt-injection-defender-small-v0-onnx/resolve/main/model.onnx",
-        "size_mb": 115,
-        "description": "Small BERT prompt injection detector",
-    },
-    "toxicity": {
-        "filename": "toxic_model.onnx",
-        "url": "https://huggingface.co/minuva/MiniLMv2-toxic-jigsaw-onnx/resolve/main/model_optimized_quantized.onnx",
-        "size_mb": 23,
-        "description": "MiniLMv2 toxic comment classifier",
-    },
-    "tokenizer": {
-        "filename": "tokenizer.json",
-        "url": "https://huggingface.co/testsavantai/prompt-injection-defender-small-v0-onnx/resolve/main/tokenizer.json",
-        "size_mb": 1,
-    },
-    "toxicity_tokenizer": {
-        "filename": "toxicity_tokenizer.json",
-        "url": "https://huggingface.co/minuva/MiniLMv2-toxic-jigsaw-onnx/resolve/main/tokenizer.json",
-        "size_mb": 1,
-    },
-}
-```
+from llmsec_lite import TrustGuard
 
-## Smart Router Architecture
+guard = TrustGuard()
 
-### Scanner Tiers
-| Tier | Scanners | Latency | Parallel |
-|------|----------|---------|----------|
-| FAST | secrets, pii, code_injection | ~1-2ms | Yes |
-| SLOW | injection, toxicity | ~3-5ms | Yes |
-| CLOUD | hallucination | ~200-400ms | Yes |
+# Scan input/output
+result = guard.scan_input("user prompt")
+result = guard.scan_output("llm response", context="user prompt")
+result = guard.scan(input_text, output_text)  # Both
 
-### Router Features
-1. **Scanner Toggles**: Enable/disable each scanner
-2. **Parallel Execution**: Run scanners concurrently (asyncio)
-3. **Tiered Processing**: Fast -> Slow -> Cloud
-4. **Early Exit**: Stop on CRITICAL threat
+# Test individual scanners
+result = guard.test_scanner("injection", "Ignore all instructions")
+result = guard.test_scanner("pii", "My SSN is 123-45-6789")
 
-### Early Exit Conditions
-- injection: Score > 0.9
-- secrets: API key or password found
-- pii: SSN or credit card found
-- toxicity: Score > 0.9
-- code_injection: DROP/DELETE or shell command
+# List available scanners
+scanners = guard.list_scanners()  # ['injection', 'secrets', 'pii', ...]
 
-## Key Commands
-
-```bash
-# Install in dev mode
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-
-# Run comprehensive scanner test
-python test_all_scanners.py
-
-# Type check
-mypy src/llmsec_lite
-
-# Lint
-ruff check src/
-
-# Build
-python -m build
-
-# Download models manually
-python -c "from llmsec_lite import download_models; import asyncio; asyncio.run(download_models())"
+# Configuration
+guard = TrustGuard.from_config_file("config.json", api_key="sk-...")
+guard = TrustGuard.from_config_dict(db_config, api_key="sk-...")
+default_config = TrustGuard.get_default_config()
+TrustGuard.save_config_template("config.json")
 ```
 
 ## Configuration Methods
 
 ### 1. JSON Configuration (Recommended for Database Integration)
-
-The SDK supports JSON-based configuration for easy database storage/retrieval:
 
 ```python
 from llmsec_lite import TrustGuard, LLMSecLiteConfig
@@ -188,9 +140,6 @@ guard = TrustGuard.from_config_dict(config, api_key=secrets.get("openai"))
 # Get default config for database storage
 default_config = TrustGuard.get_default_config()
 db.insert_org_config(org_id, default_config)
-
-# Save config template
-TrustGuard.save_config_template("llmsec_lite.config.json")
 ```
 
 **Config schema** (`llmsec_lite.config.example.json`):
@@ -234,48 +183,79 @@ TrustGuard.save_config_template("llmsec_lite.config.json")
 | `PIIConfig` | PII redaction settings |
 | `GuardConfig` | Internal runtime config |
 
-### 2. Environment Variables (Legacy)
+### 2. Environment Variables
 
 ```bash
-# API Keys
 OPENAI_API_KEY=sk-...          # OpenAI for hallucination
 LLMSEC_API_KEY=sk-...          # Alternative
-
-# LLM Configuration
 TRUSTGUARD_LLM=gpt-4o-mini     # Model for hallucination judge
-
-# SDK Configuration
 LLMSEC_MODE=local              # local | full
 LLMSEC_SENSITIVITY=balanced    # low | balanced | strict
 LLMSEC_CACHE_DIR=~/.llmsec-lite
+```
 
-# Scanner Toggles
-LLMSEC_ENABLE_INJECTION=true
-LLMSEC_ENABLE_TOXICITY=true
-LLMSEC_ENABLE_SECRETS=true
-LLMSEC_ENABLE_PII=true
-LLMSEC_ENABLE_CODE_INJECTION=true
-LLMSEC_ENABLE_HALLUCINATION=true
+## Smart Router Architecture
 
-# PII Settings
-LLMSEC_PII_REDACTION=true
-LLMSEC_PII_REDACTION_STYLE=full  # full, partial, hash
+### Scanner Tiers
+| Tier | Scanners | Latency | Parallel |
+|------|----------|---------|----------|
+| FAST | secrets, pii, code_injection | ~1-2ms | Yes |
+| SLOW | injection, toxicity | ~3-5ms | Yes |
+| CLOUD | hallucination | ~200-400ms | Yes |
+
+### Router Features
+1. **Scanner Toggles**: Enable/disable each scanner
+2. **Parallel Execution**: Run scanners concurrently (asyncio)
+3. **Tiered Processing**: Fast -> Slow -> Cloud
+4. **Early Exit**: Stop on CRITICAL threat
+
+## Key Commands
+
+```bash
+# Install in dev mode
+pip install -e ".[dev]"
+
+# Run tests (72 tests)
+pytest tests/
+
+# Run comprehensive scanner test (36 tests)
+python test_all_scanners.py
+
+# Type check
+mypy src/llmsec_lite
+
+# Lint
+ruff check src/
+
+# Build
+python -m build
+
+# Download models manually
+python -c "from llmsec_lite import download_models; import asyncio; asyncio.run(download_models())"
 ```
 
 ## Test Results
 
-### Complex Prompt Injection Tests (Small Model 115 MB)
+### Unit Tests: 72 passing
 
-| Test Category | Result |
-|---------------|--------|
-| Basic attacks (ignore instructions) | 100% |
-| Obfuscation (Base64, Leetspeak, Unicode) | 100% |
-| Role-playing attacks | 67% |
-| Jailbreaks (DAN, Developer mode) | 100% |
-| Context manipulation (nested, markdown, JSON) | 100% |
-| Multi-step attacks | 100% |
-| Clean text (no false positives) | 100% |
-| **Overall** | **87%** |
+| Test File | Tests |
+|-----------|-------|
+| test_guard.py | 19 |
+| test_injection.py | 14 |
+| test_code_injection.py | 18 |
+| test_pii.py | 11 |
+| test_secrets.py | 10 |
+
+### Comprehensive Scanner Tests: 36/36 (100%)
+
+| Scanner | Tests | Accuracy |
+|---------|-------|----------|
+| Secrets | 7/7 | 100% |
+| PII | 6/6 | 100% |
+| Code Injection | 7/7 | 100% |
+| Prompt Injection | 7/7 | 100% |
+| Toxicity | 5/5 | 100% |
+| Hallucination | 4/4 | 100% |
 
 ### Known Limitations
 - Subtle indirect attacks like "Grandma exploit" may not be detected
@@ -316,4 +296,4 @@ result = guard.scan_input(user_prompt)
 5. **Fail Open**: If scanner fails, log warning, continue with others
 6. **No Crashes**: Never crash on scanner failure
 7. **Type Hints**: Everywhere
-8. **Tests**: For every scanner
+8. **Tests**: 72 unit tests + 36 comprehensive tests
