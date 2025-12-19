@@ -1,0 +1,44 @@
+{
+  "scanners": {
+    "injection": {
+      "enabled": true,
+      "threshold": 0.3
+    },
+    "toxicity": {
+      "enabled": true,
+      "threshold": 0.3
+    },
+    "secrets": {
+      "enabled": true,
+      "threshold": null
+    },
+    "pii": {
+      "enabled": true,
+      "threshold": null
+    },
+    "code_injection": {
+      "enabled": true,
+      "threshold": null
+    },
+    "hallucination": {
+      "enabled": true,
+      "threshold": 0.5
+    }
+  },
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "api_key": null,
+    "base_url": "https://api.openai.com/v1",
+    "timeout": 30
+  },
+  "pii": {
+    "redaction": true,
+    "redaction_style": "full"
+  },
+  "mode": "local",
+  "sensitivity": "balanced",
+  "cache_dir": "~/.llmsec-lite",
+  "parallel": true,
+  "early_exit": true
+}

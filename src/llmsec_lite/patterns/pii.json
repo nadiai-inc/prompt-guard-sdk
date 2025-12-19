@@ -1,0 +1,155 @@
+{
+  "version": "1.0.0",
+  "description": "PII detection patterns for LLMSEC LITE",
+  "patterns": [
+    {
+      "id": "ssn",
+      "name": "Social Security Number",
+      "pattern": "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+      "severity": "critical",
+      "redaction_partial": "***-**-{last4}"
+    },
+    {
+      "id": "ssn_no_dashes",
+      "name": "Social Security Number (no dashes)",
+      "pattern": "\\b\\d{9}\\b",
+      "severity": "critical",
+      "context_required": true,
+      "redaction_partial": "*****{last4}"
+    },
+    {
+      "id": "credit_card_visa",
+      "name": "Visa Credit Card",
+      "pattern": "\\b4[0-9]{12}(?:[0-9]{3})?\\b",
+      "severity": "critical",
+      "redaction_partial": "****-****-****-{last4}"
+    },
+    {
+      "id": "credit_card_mastercard",
+      "name": "Mastercard",
+      "pattern": "\\b5[1-5][0-9]{14}\\b",
+      "severity": "critical",
+      "redaction_partial": "****-****-****-{last4}"
+    },
+    {
+      "id": "credit_card_amex",
+      "name": "American Express",
+      "pattern": "\\b3[47][0-9]{13}\\b",
+      "severity": "critical",
+      "redaction_partial": "****-******-*{last4}"
+    },
+    {
+      "id": "credit_card_discover",
+      "name": "Discover Card",
+      "pattern": "\\b6(?:011|5[0-9]{2})[0-9]{12}\\b",
+      "severity": "critical",
+      "redaction_partial": "****-****-****-{last4}"
+    },
+    {
+      "id": "credit_card_diners",
+      "name": "Diners Club",
+      "pattern": "\\b3(?:0[0-5]|[68][0-9])[0-9]{11}\\b",
+      "severity": "critical",
+      "redaction_partial": "****-****-****-{last4}"
+    },
+    {
+      "id": "phone_us",
+      "name": "US Phone Number",
+      "pattern": "\\(?[0-9]{3}\\)?[-.\\s]?[0-9]{3}[-.\\s]?[0-9]{4}",
+      "severity": "medium",
+      "redaction_partial": "(***) ***-{last4}"
+    },
+    {
+      "id": "phone_international",
+      "name": "International Phone Number",
+      "pattern": "\\b\\+[1-9]\\d{1,14}\\b",
+      "severity": "medium",
+      "redaction_partial": "+**********{last4}"
+    },
+    {
+      "id": "email",
+      "name": "Email Address",
+      "pattern": "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b",
+      "severity": "medium",
+      "redaction_partial": "{first}***@***.***"
+    },
+    {
+      "id": "ip_address_v4",
+      "name": "IPv4 Address",
+      "pattern": "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b",
+      "severity": "low",
+      "redaction_partial": "***.***.***.***"
+    },
+    {
+      "id": "ip_address_v6",
+      "name": "IPv6 Address",
+      "pattern": "\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b",
+      "severity": "low",
+      "redaction_partial": "****:****:****:****:****:****:****:****"
+    },
+    {
+      "id": "date_of_birth",
+      "name": "Date of Birth",
+      "pattern": "(?i)\\b(?:dob|birth\\s*date|date\\s*of\\s*birth)[:\\s]+\\d{1,2}[/\\-]\\d{1,2}[/\\-]\\d{2,4}\\b",
+      "severity": "high",
+      "redaction_partial": "[DOB REDACTED]"
+    },
+    {
+      "id": "drivers_license",
+      "name": "Driver's License",
+      "pattern": "(?i)\\b(?:driver'?s?\\s*license|dl)[:\\s#]*[A-Z0-9]{5,15}\\b",
+      "severity": "high",
+      "redaction_partial": "[DL REDACTED]"
+    },
+    {
+      "id": "passport_us",
+      "name": "US Passport Number",
+      "pattern": "(?i)\\b(?:passport)[:\\s#]*[A-Z0-9]{6,9}\\b",
+      "severity": "high",
+      "redaction_partial": "[PASSPORT REDACTED]"
+    },
+    {
+      "id": "bank_account",
+      "name": "Bank Account Number",
+      "pattern": "(?i)\\b(?:account|acct)[:\\s#]*\\d{8,17}\\b",
+      "severity": "critical",
+      "redaction_partial": "[ACCOUNT REDACTED]"
+    },
+    {
+      "id": "routing_number",
+      "name": "Bank Routing Number",
+      "pattern": "(?i)\\b(?:routing|aba)[:\\s#]*\\d{9}\\b",
+      "severity": "high",
+      "redaction_partial": "[ROUTING REDACTED]"
+    },
+    {
+      "id": "iban",
+      "name": "IBAN",
+      "pattern": "\\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}\\b",
+      "severity": "critical",
+      "redaction_partial": "[IBAN REDACTED]"
+    },
+    {
+      "id": "medicare_id",
+      "name": "Medicare ID",
+      "pattern": "\\b[1-9][A-Z][A-Z0-9]\\d-[A-Z][A-Z0-9]\\d-[A-Z]{2}\\d{2}\\b",
+      "severity": "critical",
+      "redaction_partial": "[MEDICARE REDACTED]"
+    },
+    {
+      "id": "us_address",
+      "name": "US Street Address",
+      "pattern": "\\b\\d{1,5}\\s+[A-Za-z]+\\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Way|Circle|Cir)\\b",
+      "severity": "medium",
+      "redaction_partial": "[ADDRESS REDACTED]"
+    },
+    {
+      "id": "zip_code",
+      "name": "US ZIP Code",
+      "pattern": "\\b\\d{5}(-\\d{4})?\\b",
+      "severity": "low",
+      "context_required": true,
+      "redaction_partial": "*****"
+    }
+  ]
+}

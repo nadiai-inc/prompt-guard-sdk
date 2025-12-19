@@ -1,0 +1,307 @@
+{
+  "version": "1.0.0",
+  "description": "Code injection detection patterns for LLMSEC LITE",
+  "patterns": [
+    {
+      "id": "sql_select",
+      "name": "SQL SELECT Statement",
+      "pattern": "(?i)\\bSELECT\\b.+\\bFROM\\b",
+      "severity": "medium",
+      "category": "sql"
+    },
+    {
+      "id": "sql_union",
+      "name": "SQL UNION Injection",
+      "pattern": "(?i)\\bUNION\\s+(ALL\\s+)?SELECT\\b",
+      "severity": "critical",
+      "category": "sql"
+    },
+    {
+      "id": "sql_drop",
+      "name": "SQL DROP Statement",
+      "pattern": "(?i)\\bDROP\\s+(TABLE|DATABASE|INDEX|VIEW|SCHEMA)\\b",
+      "severity": "critical",
+      "category": "sql"
+    },
+    {
+      "id": "sql_delete",
+      "name": "SQL DELETE Statement",
+      "pattern": "(?i)\\bDELETE\\s+FROM\\b",
+      "severity": "high",
+      "category": "sql"
+    },
+    {
+      "id": "sql_insert",
+      "name": "SQL INSERT Statement",
+      "pattern": "(?i)\\bINSERT\\s+INTO\\b",
+      "severity": "medium",
+      "category": "sql"
+    },
+    {
+      "id": "sql_update",
+      "name": "SQL UPDATE Statement",
+      "pattern": "(?i)\\bUPDATE\\b.+\\bSET\\b",
+      "severity": "medium",
+      "category": "sql"
+    },
+    {
+      "id": "sql_truncate",
+      "name": "SQL TRUNCATE Statement",
+      "pattern": "(?i)\\bTRUNCATE\\s+(TABLE\\s+)?\\w+",
+      "severity": "critical",
+      "category": "sql"
+    },
+    {
+      "id": "sql_alter",
+      "name": "SQL ALTER Statement",
+      "pattern": "(?i)\\bALTER\\s+(TABLE|DATABASE|INDEX)\\b",
+      "severity": "high",
+      "category": "sql"
+    },
+    {
+      "id": "sql_create",
+      "name": "SQL CREATE Statement",
+      "pattern": "(?i)\\bCREATE\\s+(TABLE|DATABASE|INDEX|VIEW|PROCEDURE|FUNCTION)\\b",
+      "severity": "medium",
+      "category": "sql"
+    },
+    {
+      "id": "sql_comment",
+      "name": "SQL Comment Injection",
+      "pattern": ";\\s*--",
+      "severity": "high",
+      "category": "sql"
+    },
+    {
+      "id": "sql_or_true",
+      "name": "SQL OR 1=1 Injection",
+      "pattern": "(?i)\\bOR\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+['\"]?",
+      "severity": "critical",
+      "category": "sql"
+    },
+    {
+      "id": "sql_and_true",
+      "name": "SQL AND 1=1 Injection",
+      "pattern": "(?i)\\bAND\\s+['\"]?\\d+['\"]?\\s*=\\s*['\"]?\\d+['\"]?",
+      "severity": "high",
+      "category": "sql"
+    },
+    {
+      "id": "sql_exec",
+      "name": "SQL EXEC Statement",
+      "pattern": "(?i)\\bEXEC(UTE)?\\s*\\(",
+      "severity": "critical",
+      "category": "sql"
+    },
+    {
+      "id": "sql_waitfor",
+      "name": "SQL WAITFOR (Time-based)",
+      "pattern": "(?i)\\bWAITFOR\\s+DELAY\\b",
+      "severity": "high",
+      "category": "sql"
+    },
+    {
+      "id": "xss_script",
+      "name": "XSS Script Tag",
+      "pattern": "(?i)<script[^>]*>",
+      "severity": "critical",
+      "category": "xss"
+    },
+    {
+      "id": "xss_script_close",
+      "name": "XSS Script Close Tag",
+      "pattern": "(?i)</script>",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_javascript",
+      "name": "XSS JavaScript Protocol",
+      "pattern": "(?i)javascript:",
+      "severity": "critical",
+      "category": "xss"
+    },
+    {
+      "id": "xss_event_handler",
+      "name": "XSS Event Handler",
+      "pattern": "(?i)\\bon\\w+\\s*=",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_iframe",
+      "name": "XSS Iframe Tag",
+      "pattern": "(?i)<iframe[^>]*>",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_embed",
+      "name": "XSS Embed Tag",
+      "pattern": "(?i)<embed[^>]*>",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_object",
+      "name": "XSS Object Tag",
+      "pattern": "(?i)<object[^>]*>",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_svg_onload",
+      "name": "XSS SVG onload",
+      "pattern": "(?i)<svg[^>]*onload",
+      "severity": "critical",
+      "category": "xss"
+    },
+    {
+      "id": "xss_img_onerror",
+      "name": "XSS IMG onerror",
+      "pattern": "(?i)<img[^>]*onerror",
+      "severity": "critical",
+      "category": "xss"
+    },
+    {
+      "id": "xss_expression",
+      "name": "XSS CSS Expression",
+      "pattern": "(?i)expression\\s*\\(",
+      "severity": "high",
+      "category": "xss"
+    },
+    {
+      "id": "xss_vbscript",
+      "name": "XSS VBScript Protocol",
+      "pattern": "(?i)vbscript:",
+      "severity": "critical",
+      "category": "xss"
+    },
+    {
+      "id": "xss_data_uri",
+      "name": "XSS Data URI",
+      "pattern": "(?i)data:[^,]*base64",
+      "severity": "medium",
+      "category": "xss"
+    },
+    {
+      "id": "cmd_semicolon",
+      "name": "Command Injection (Semicolon)",
+      "pattern": ";\\s*(rm|cat|ls|wget|curl|bash|sh|python|perl|ruby|chmod|chown|kill|pkill|nc|netcat)\\b",
+      "severity": "critical",
+      "category": "command"
+    },
+    {
+      "id": "cmd_pipe",
+      "name": "Command Injection (Pipe)",
+      "pattern": "\\|\\s*(bash|sh|zsh|cat|grep|awk|sed|python|perl|nc|netcat)\\b",
+      "severity": "critical",
+      "category": "command"
+    },
+    {
+      "id": "cmd_backtick",
+      "name": "Command Injection (Backtick)",
+      "pattern": "`[^`]+`",
+      "severity": "high",
+      "category": "command"
+    },
+    {
+      "id": "cmd_subshell",
+      "name": "Command Injection (Subshell)",
+      "pattern": "\\$\\([^)]+\\)",
+      "severity": "high",
+      "category": "command"
+    },
+    {
+      "id": "cmd_and",
+      "name": "Command Injection (AND)",
+      "pattern": "&&\\s*(rm|cat|wget|curl|bash|sh|python|nc)\\b",
+      "severity": "critical",
+      "category": "command"
+    },
+    {
+      "id": "cmd_or",
+      "name": "Command Injection (OR)",
+      "pattern": "\\|\\|\\s*(rm|cat|wget|curl|bash|sh|python|nc)\\b",
+      "severity": "critical",
+      "category": "command"
+    },
+    {
+      "id": "cmd_newline",
+      "name": "Command Injection (Newline)",
+      "pattern": "\\n\\s*(rm|cat|wget|curl|bash|sh)\\b",
+      "severity": "critical",
+      "category": "command"
+    },
+    {
+      "id": "path_traversal_unix",
+      "name": "Path Traversal (Unix)",
+      "pattern": "\\.\\./",
+      "severity": "high",
+      "category": "path"
+    },
+    {
+      "id": "path_traversal_windows",
+      "name": "Path Traversal (Windows)",
+      "pattern": "\\.\\.\\\\",
+      "severity": "high",
+      "category": "path"
+    },
+    {
+      "id": "path_etc_passwd",
+      "name": "Path /etc/passwd",
+      "pattern": "/etc/passwd",
+      "severity": "critical",
+      "category": "path"
+    },
+    {
+      "id": "path_etc_shadow",
+      "name": "Path /etc/shadow",
+      "pattern": "/etc/shadow",
+      "severity": "critical",
+      "category": "path"
+    },
+    {
+      "id": "path_windows_system",
+      "name": "Windows System Path",
+      "pattern": "(?i)c:\\\\windows",
+      "severity": "high",
+      "category": "path"
+    },
+    {
+      "id": "ldap_injection",
+      "name": "LDAP Injection",
+      "pattern": "[()&|*\\\\][^\\s]*=",
+      "severity": "high",
+      "category": "ldap"
+    },
+    {
+      "id": "xxe_entity",
+      "name": "XXE Entity Declaration",
+      "pattern": "<!ENTITY\\s+\\w+\\s+SYSTEM",
+      "severity": "critical",
+      "category": "xml"
+    },
+    {
+      "id": "xxe_parameter_entity",
+      "name": "XXE Parameter Entity",
+      "pattern": "<!ENTITY\\s+%\\s+\\w+",
+      "severity": "critical",
+      "category": "xml"
+    },
+    {
+      "id": "ssti_jinja",
+      "name": "SSTI Jinja2",
+      "pattern": "\\{\\{.*\\}\\}",
+      "severity": "high",
+      "category": "ssti"
+    },
+    {
+      "id": "ssti_freemarker",
+      "name": "SSTI FreeMarker",
+      "pattern": "<#.*>",
+      "severity": "high",
+      "category": "ssti"
+    }
+  ]
+}
