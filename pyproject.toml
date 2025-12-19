@@ -3,18 +3,18 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nadiai-prompt-guard"
-version = "0.1.0"
-description = "NadiAI Prompt Guard SDK - Local LLM security scanning with ONNX models"
+name = "llmsec-lite"
+version = "1.0.0"
+description = "Enterprise LLM Security, Lightweight - 6 guard rails for LLM security"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
     {name = "NadiAI", email = "support@nadiai.com"}
 ]
-keywords = ["llm", "security", "prompt-injection", "ai-safety", "onnx"]
+keywords = ["llm", "security", "prompt-injection", "ai-safety", "onnx", "pii", "toxicity", "hallucination"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -28,26 +28,57 @@ classifiers = [
 
 dependencies = [
     "onnxruntime>=1.16.0",
-    "transformers>=4.30.0",
-    "optimum[onnxruntime]>=1.12.0",
-    "torch>=2.0.0",
-    "numpy>=1.24.0",
+    "tokenizers>=0.15.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "structlog>=23.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+gpu = [
+    "onnxruntime-gpu>=1.16.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/nadiai/prompt-guard-sdk"
+Homepage = "https://github.com/nadiai-inc/prompt-guard-sdk"
 Documentation = "https://docs.nadiai.com/prompt-guard"
-Repository = "https://github.com/nadiai/prompt-guard-sdk"
+Repository = "https://github.com/nadiai-inc/prompt-guard-sdk"
+
+[project.scripts]
+llmsec-lite = "llmsec_lite.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["nadiai_prompt_guard*"]
+where = ["src"]
+include = ["llmsec_lite*"]
 
 [tool.setuptools.package-data]
-nadiai_prompt_guard = ["models/*"]
+llmsec_lite = ["patterns/*.json"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
