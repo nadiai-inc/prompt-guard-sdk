@@ -15,30 +15,6 @@ class ConfigurationError(LLMSecError):
     pass
 
 
-class ModelNotFoundError(LLMSecError):
-    """Required model not found and auto_download is False."""
-
-    pass
-
-
-class ModelLoadError(LLMSecError):
-    """Failed to load model."""
-
-    pass
-
-
-class APIError(LLMSecError):
-    """Error calling LLM API."""
-
-    pass
-
-
-class APIKeyMissingError(LLMSecError):
-    """API key required but not provided."""
-
-    pass
-
-
 class ScanError(LLMSecError):
     """Error during scanning."""
 

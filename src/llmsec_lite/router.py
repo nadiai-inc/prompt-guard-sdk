@@ -37,11 +37,7 @@ class ScannerTier(str, Enum):
 # Mapping of scanner IDs to their tiers
 SCANNER_TIERS: dict[str, ScannerTier] = {
     "secrets": ScannerTier.FAST,
-    "pii": ScannerTier.FAST,  # Regex part is fast
-    "code_injection": ScannerTier.FAST,
-    "injection": ScannerTier.SLOW,
-    "toxicity": ScannerTier.SLOW,
-    "hallucination": ScannerTier.CLOUD,
+    "pii": ScannerTier.FAST,
 }
 
 

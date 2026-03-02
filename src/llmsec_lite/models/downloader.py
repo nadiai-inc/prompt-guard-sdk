@@ -11,34 +11,8 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-# Model URLs - pointing to actual HuggingFace models
-# Note: Using lightweight/optimized models for efficiency
-MODEL_REGISTRY: dict[str, dict[str, Any]] = {
-    "injection": {
-        "filename": "injection_model.onnx",
-        "url": "https://huggingface.co/testsavantai/prompt-injection-defender-small-v0-onnx/resolve/main/model.onnx",
-        "size_mb": 115,
-        "description": "Small BERT prompt injection detector (115 MB)",
-    },
-    "toxicity": {
-        "filename": "toxic_model.onnx",
-        "url": "https://huggingface.co/minuva/MiniLMv2-toxic-jigsaw-onnx/resolve/main/model_optimized_quantized.onnx",
-        "size_mb": 23,
-        "description": "MiniLMv2 toxic comment classifier (optimized INT8)",
-    },
-    "tokenizer": {
-        "filename": "tokenizer.json",
-        "url": "https://huggingface.co/testsavantai/prompt-injection-defender-small-v0-onnx/resolve/main/tokenizer.json",
-        "size_mb": 1,
-        "description": "BERT tokenizer (for injection scanner)",
-    },
-    "toxicity_tokenizer": {
-        "filename": "toxicity_tokenizer.json",
-        "url": "https://huggingface.co/minuva/MiniLMv2-toxic-jigsaw-onnx/resolve/main/tokenizer.json",
-        "size_mb": 1,
-        "description": "MiniLMv2 tokenizer (for toxicity scanner)",
-    },
-}
+# Model registry — no ONNX models needed (secrets + PII are regex-only)
+MODEL_REGISTRY: dict[str, dict[str, Any]] = {}
 
 
 def get_cache_dir(cache_dir: str = "~/.llmsec-lite") -> Path:
