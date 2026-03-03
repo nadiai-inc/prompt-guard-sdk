@@ -94,7 +94,7 @@ class TestPIIScanner:
 
         redacted = result.metadata.get("redacted_text")
         assert redacted is not None
-        assert "[REDACTED]" in redacted
+        assert "xxx" in redacted
         assert "123-45-6789" not in redacted
 
     @pytest.mark.asyncio

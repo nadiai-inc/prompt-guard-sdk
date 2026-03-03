@@ -230,13 +230,14 @@ class PIIScanner(RegexScanner):
                 findings.append(
                     Finding(
                         type=pattern_def.get("id", "pii"),
-                        value=redacted_value,
+                        value=matched_value,
                         location=(match.start(), match.end()),
                         severity=severity,
                         confidence=0.9,
                         details={
                             "pattern_name": pattern_def.get("name", "Unknown"),
                             "pii_type": pattern_def.get("id", "unknown"),
+                            "redacted_value": redacted_value,
                         },
                     )
                 )
@@ -247,7 +248,8 @@ class PIIScanner(RegexScanner):
             sorted_findings = sorted(findings, key=lambda f: f.location[0], reverse=True)
             for finding in sorted_findings:
                 start, end = finding.location
-                redacted_text = redacted_text[:start] + finding.value + redacted_text[end:]
+                replacement = finding.details.get("redacted_value", "xxx")
+                redacted_text = redacted_text[:start] + replacement + redacted_text[end:]
 
         return ScannerResult(
             score=max_score,
