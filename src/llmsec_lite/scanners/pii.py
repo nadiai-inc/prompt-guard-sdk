@@ -166,7 +166,7 @@ class PIIScanner(RegexScanner):
             Redacted string
         """
         if self.redaction_style == RedactionStyle.FULL:
-            return "[REDACTED]"
+            return "xxx"
 
         if self.redaction_style == RedactionStyle.HASH:
             import hashlib
