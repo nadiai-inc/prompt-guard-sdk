@@ -146,7 +146,27 @@ class TrustGuard:
             ScanResult with findings
         """
         await self._ensure_initialized()
-        return await self._router.route(text, "input", checks=checks)
+        result = await self._router.route(text, "input", checks=checks)
+
+        # Apply PII redaction to sanitized_text if available
+        if "pii" in result.checks and self.config.pii_redaction:
+            pii_result = result.checks["pii"]
+            if pii_result.findings:
+                pii_scanner = self._scanners.get("pii")
+                if isinstance(pii_scanner, PIIScanner):
+                    pii_scan = await pii_scanner.scan(text)
+                    redacted = pii_scan.metadata.get("redacted_text")
+                    if redacted:
+                        result = ScanResult(
+                            blocked=result.blocked,
+                            risk_score=result.risk_score,
+                            checks=result.checks,
+                            findings=result.findings,
+                            sanitized_text=redacted,
+                            latency_ms=result.latency_ms,
+                        )
+
+        return result
 
     def scan_output(
         self,
