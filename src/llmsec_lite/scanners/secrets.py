@@ -64,7 +64,7 @@ class SecretsScanner(RegexScanner):
             {
                 "id": "openai_key",
                 "name": "OpenAI API Key",
-                "pattern": r"sk-[a-zA-Z0-9]{48,}",
+                "pattern": r"sk-(?:proj-)?[a-zA-Z0-9]{20,}",
                 "severity": "critical",
             },
             {
