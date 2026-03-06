@@ -141,8 +141,14 @@ class SecretsScanner(RegexScanner):
             },
             {
                 "id": "google_api_key",
-                "name": "Google API Key",
+                "name": "Google / Gemini API Key",
                 "pattern": r"AIza[0-9A-Za-z\-_]{35}",
+                "severity": "critical",
+            },
+            {
+                "id": "perplexity_key",
+                "name": "Perplexity API Key",
+                "pattern": r"pplx-[a-f0-9]{48}",
                 "severity": "critical",
             },
             {
